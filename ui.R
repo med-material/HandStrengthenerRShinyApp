@@ -4,8 +4,8 @@ library(shinyjs)
 
 # Define UI for application that plots features of movies 
 shinyUI(
-  
   fluidPage(
+    includeCSS("custom.css"),
     useShinyjs(),
     fluidRow(
       titlePanel("Hand Strengthener Data Analysis"),
@@ -48,7 +48,8 @@ shinyUI(
                    #plotOutput(outputId = "scatterplot", hover = "plot_hover", height="650px"),
                  )
         )
-      )
+      ),
+      tags$footer()
     )
   )
 )

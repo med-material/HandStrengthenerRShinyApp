@@ -1,0 +1,12 @@
+body {
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+footer {
+    background: no-repeat url("hmi-lab.svg");
+    height: 50px;
+    width: 100%;
+    display: inline-block;
+    margin-top: 20px;
+}
