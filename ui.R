@@ -8,11 +8,15 @@ shinyUI(
     includeCSS("custom.css"),
     useShinyjs(),
     fluidRow(
-      titlePanel("Hand Strengthener Data Analysis"),
+      column(12, titlePanel("Hand Strengthener Data Analysis")),
       #column(4,
       #       column(1, style = "margin-top : 20px; text-align: right;", icon("user", class = "fa-2x", lib="font-awesome")),
       #       column(11,style = "margin-top : 20px; text-align: center;",selectInput("selectExperiment", NULL, choices = levels(M$Exp.ID)))
       #),
+    ),
+    fluidRow(
+      column(12, checkboxGroupInput("pidChooser", label = "Loading...", choices = NULL, inline = TRUE))
+    ),
       tabsetPanel(id = "tabs", type = "tabs",
         tabPanel(id = "explorepan", strong("Experiment Exploration"),
           sidebarPanel( 
@@ -50,7 +54,6 @@ shinyUI(
         )
       ),
       tags$footer()
-    )
   )
 )
 
