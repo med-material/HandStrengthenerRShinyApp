@@ -17,48 +17,64 @@ timetemplate <- plot_ly() %>%
   config(scrollZoom = TRUE, displaylogo = FALSE, modeBarButtonsToRemove = c("select2d","hoverCompareCartesian", "toggleSpikelines","toImage", "sendDataToCloud", "editInChartStudio", "lasso2d", "drawclosedpath", "drawopenpath", "drawline", "drawcircle", "eraseshape", "autoScale2d", "hoverClosestCartesian","toggleHover", "")) %>%
   layout(dragmode = "pan", xaxis = list(tickformat="%H:%M:%S.%L ms"), yaxis = list(range=c(0,1.1)))
 
-
-
-df_test <- read.csv('HTEST/log2020-10-20 16-08-38.6149Sample.csv', na.strings="NULL")
-
-df_test2 <- read.csv('HTEST/log2020-10-20 16-11-51.6702Sample.csv', na.strings="NULL")
-
-timetemplate %>%
-  add_trace(data=df_test, x=~Timestamp, y=~BCIConfidence, type="scatter", mode="markers+lines") %>%
-  add_trace(data=df_test2, x=~Timestamp, y=~BCIConfidence, type="scatter", mode="markers+lines")
-
 ###################
 # LOAD AND ENRICH #
 ###################
 load_data <- function(participant, cond,rep) {
   dir = paste('H',participant,'_',cond,'/',sep='')
-  F1c1 = list.files(dir, pattern=paste("_",rep,".csv",sep=''))
-  F1c1 <- lapply(paste(dir,F1c1, sep=''), read.csv, na.strings="NULL")
+  datasets = list.files(dir, pattern=paste("_",rep,".csv",sep=''))
+  datasets <- lapply(paste(dir,datasets, sep=''), read.csv, na.strings="NULL")
   
-  names(F1c1) <- c("Game", "Meta", "Sample")
-  F1c1$Meta <- F1c1$Meta %>%
-    mutate(Timestamp = NULL, SessionID = NULL,Email = NULL, Framecount = NULL)
-  F1c1$Meta <- F1c1$Meta[1,]
-  F1c1$Game <- F1c1$Game %>% mutate(BCIConfidence = as.numeric(BCIConfidence),
-                                    EventType = 'Event')
-  F1c1$Sample <- F1c1$Sample %>% mutate(BCIConfidence = as.numeric(BCIConfidence),
-                                        EventType = 'BCI')
+  game_exists = length(datasets) > 0
+  meta_exists = length(datasets) > 1
+  sample_exists = length(datasets) > 2
   
-  D1c1 <- bind_rows(F1c1$Game, F1c1$Sample) %>%
-    bind_cols(F1c1$Meta)
-  
-  D1c1 <- D1c1 %>% 
+  dataset_combined = data.frame()
+  if(game_exists) {
+    names(datasets)[1] = "Game"
+    
+    # Setup Game dataset
+    datasets$Game <- datasets$Game %>%
+      mutate(BCIConfidence = as.numeric(BCIConfidence),
+             EventType = 'Event')
+    
+    dataset_combined = bind_rows(dataset_combined, datasets$Game)
+  }
+  if (sample_exists) {
+    names(datasets)[3] = "Sample"
+    
+    # Setup Sample dataset
+    datasets$Sample <- datasets$Sample %>%
+      mutate(BCIConfidence = as.numeric(BCIConfidence),
+             EventType = 'BCI')
+    
+    dataset_combined = bind_rows(dataset_combined, datasets$Sample)
+  }
+  if (meta_exists){
+    names(datasets)[2] = "Meta"
+    datasets$Meta <- datasets$Meta[1,]
+    
+    # Setup Meta dataset
+    datasets$Meta <- datasets$Meta %>%
+      mutate(Timestamp = NULL,
+             SessionID = NULL,
+             Email = NULL,
+             Framecount = NULL)
+    
+    dataset_combined = bind_cols(dataset_combined, datasets$Meta)
+  }
+  dataset_combined <- dataset_combined %>% 
     mutate(Timestamp = as.POSIXct(Timestamp, format = "%Y-%m-%d %H:%M:%OS")) %>%
-    arrange(Timestamp) %>%
-    distinct() # used due to a bug in gamemanger prior to v20.10.2020
+    arrange(Timestamp)
+    #distinct() # used due to a bug in gamemanger prior to v20.10.2020
   
-  return(D1c1)
+  return(dataset_combined)
 }
 
 
-participants <- 1:3
-conditions <- c('HA','MI')
-repetitions <- 1:3
+participants <- 4
+conditions <- c('MI') #'HA'
+repetitions <- 1:4
 
 D_all <- data.frame()
 
@@ -121,7 +137,7 @@ timetemplate %>%
   add_segments(name="InputWindow", data=D_all %>% filter(InputWindow == 'Open'), type='scattergl',
                x = ~Timestamp, y = 0.02, xend= ~InputWindowEnd, yend = 0.02, size=I(6), color =I('SeaGreen')) %>%
   add_segments(name="BCIThreshold", data=D_all, type='scattergl',
-               x = ~min(Timestamp), y =~ConfidenceThreshold, xend=~max(Timestamp), yend =~ConfidenceThreshold, size=I(2), visible = "legendonly", color =I('LightCoral')) %>%
+               x = ~min(Timestamp), y =0.73, xend=~max(Timestamp), yend =0.73, size=I(2), visible = "legendonly", color =I('LightCoral')) %>%
   #add_segments(name="MoleHit", data=D_e_molehitduration,
   #             x = ~Timestamp, y = 0, xend= ~MoleDestinyTimestamp, yend = 0, size=I(6), color =I('DarkGreen')) %>%
   #add_segments(name="MoleMiss", data=D_e_molemissduration,

@@ -30,13 +30,13 @@ D_all <- D_all %>% filter(!Event %in% c('Sample','NoData'))
 
 # Label input windows above 10 as '', below 10 as ''
 D_all <- D_all %>%
-  mutate(ExperimentalMode = ifelse(InputWindowOrder < 10, "InstructedToAttempt","InstructedToRest"))
+  mutate(ExperimentalMode = "InstructedToAttempt") #ifelse(InputWindowOrder < 10, "InstructedToAttempt","InstructedToRest"))
 
 
 
 
 # Count
-trial_summary <- D_all %>% group_by(PID,Condition,Repetition,ExperimentalMode) %>%
+trial_summary <- D_all %>% ungroup() %>% group_by(PID,Condition,Repetition,ExperimentalMode) %>%
   filter(Event == "GameDecision") %>%
   summarize(rejInput = sum(TrialResult == "RejInput"),
             accInput = sum(TrialResult == "AccInput"),
